@@ -1,0 +1,80 @@
+{
+  "name": "difora",
+  "version": "0.8.0",
+  "description": "Difora CLI — upload screenshots from CI for EU-only visual regression testing.",
+  "license": "MIT",
+  "homepage": "https://difora.eu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/difora/difora-client"
+  },
+  "bugs": {
+    "url": "https://github.com/difora/difora-client/issues"
+  },
+  "keywords": [
+    "visual-regression",
+    "visual-testing",
+    "screenshots",
+    "playwright",
+    "storybook",
+    "ci",
+    "eu"
+  ],
+  "bin": {
+    "difora": "./main.js"
+  },
+  "main": "./main.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "main.js",
+    "playwright.js",
+    "storybook.js",
+    "main.d.ts",
+    "playwright.d.ts",
+    "storybook.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./main.d.ts",
+      "default": "./main.js"
+    },
+    "./playwright": {
+      "types": "./playwright.d.ts",
+      "default": "./playwright.js"
+    },
+    "./storybook": {
+      "types": "./storybook.d.ts",
+      "default": "./storybook.js"
+    }
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "jest --runInBand",
+    "pack": "npm run build && npm test && npm pack",
+    "check:release": "node scripts/check-release.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.7",
+    "typescript": "6.0.3",
+    "jest": "30.3.0",
+    "ts-jest": "29.4.12",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.13.3"
+  }
+}

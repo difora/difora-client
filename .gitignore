@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+main.js
+playwright.js
+storybook.js
+*.tgz
+.env*
+.DS_Store
