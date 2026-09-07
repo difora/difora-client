@@ -24,7 +24,12 @@ Source: [github.com/difora/difora-client](https://github.com/difora/difora-clien
 This MIT-licensed repository contains the standalone npm client and capture helpers.
 The hosted service is maintained separately. No service code or customer data is included.
 
-While npm publication is pending, build the current release from public source:
+Download the package and `SHA256SUMS` from
+[GitHub Releases](https://github.com/difora/difora-client/releases).
+The release notes explain checksum verification and installation. GitHub releases and
+npm publication are separate.
+
+Alternatively, while npm publication is pending, build from public source:
 
 ```sh
 git clone https://github.com/difora/difora-client.git

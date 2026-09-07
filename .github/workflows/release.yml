@@ -1,12 +1,11 @@
 name: Publish CLI
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   publish:
-    if: github.repository == 'difora/difora-client'
+    if: github.repository == 'difora/difora-client' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
