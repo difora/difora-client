@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
@@ -81,6 +82,11 @@ export async function capture<Mask>(
     screenshotName(name, width),
   );
   await mkdir(dirname(path), { recursive: true });
+  if (existsSync(path)) {
+    console.warn(
+      `difora: WARNING: overwriting screenshot ${path}. Use distinct names for each viewport, browser or theme.`,
+    );
+  }
   await page.screenshot({
     path,
     type: 'png',

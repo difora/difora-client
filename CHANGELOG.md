@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.3
+
+- Warn before replacing an existing screenshot; use distinct names for each viewport, browser or theme.
+- Link a complete Playwright configuration and static-site recipe, and spell out CI setup prerequisites.
+- Document fixture mask and clip options, viewport naming collisions, snapshot usage and retry counting.
+- Link the complete CLI reference and clarify that baselines must use the same rendering environment as CI.
+- Simplify the README and remove the contribution guide and its links.
+
 ## 0.8.1
 
 Updated installation documentation for the published npm client.

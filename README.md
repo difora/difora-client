@@ -22,6 +22,9 @@ Commit `package.json` and `package-lock.json`, then run `npm ci` in CI before ca
 ```
 
 Start with the [getting-started guide](https://difora.eu/docs/getting-started.html).
+The CI fragment above follows checkout, Node setup, `npm ci` and
+`npx playwright install --with-deps`; build your site before capture.
+See the [full GitHub Actions job](https://difora.eu/docs/ci.html#github).
 Customer-selected integrations receive build metadata; public PR thumbnails require
 an owner's opt-in and may be cached outside the EU.
 
@@ -46,9 +49,13 @@ npm pack
 Then, in your screenshot project, install the generated tarball:
 
 ```sh
-npm install --save-dev /path/to/difora-client/difora-0.8.1.tgz
+npm install --save-dev /path/to/difora-client/difora-0.8.3.tgz
 npx difora --version
 ```
+
+Full [CLI reference](https://difora.eu/docs/cli.html): option arguments, defaults,
+environment variables, exit codes and usage accounting.
+[Complete Playwright config and static-site recipe](https://difora.eu/docs/capture.html#playwright-config).
 
 ## Usage
 
@@ -81,6 +88,9 @@ every CI run show visual changes. To test locally, use a scratch branch with
 Snapshot names are the PNG paths relative to `<dir>` without the extension, so `login/desktop.png`
 becomes `login/desktop`. Every file is hashed (SHA-256); images the server already has are not
 transferred again. Network errors, 429 and 5xx responses are retried with back-off.
+Each submitted snapshot counts once when a build starts comparison, including unchanged
+images and all shards, against your organization's UTC calendar-month allowance; a new
+build attempt counts again. [Usage and retries](https://difora.eu/docs/cli.html#usage).
 
 ## Exit codes
 
@@ -106,11 +116,14 @@ await diforaScreenshot(page, 'home', { fullPage: true, viewportSuffix: true });
 test; apply it after your existing fixture extensions. `createPostVisit(options)` from
 `difora/storybook` supports the Storybook test-runner hook. Options include `fullPage`,
 `viewportSuffix`, `dir` and a Storybook `skip(context)` predicate; direct Playwright capture
-also supports `mask` locators and `clip`. Helpers disable animations and hide the caret.
+and the `withDifora` fixture both support `mask` locators and `clip`. Helpers disable animations and hide the caret.
 
 Output goes to `dir`, `DIFORA_SCREENSHOT_DIR`, or `./screenshots`. Names retain groups,
 with stable hash suffixes when sanitised. Use a fresh directory for each CI run; helpers
 do not delete existing files. Wait for your app to be ready before capturing.
+
+`viewportSuffix` adds only the width, not the Playwright project name, height, browser
+or theme. Use distinct widths or explicit name prefixes; identical paths overwrite.
 
 Capture recipes: https://difora.eu/docs/capture.html
 Getting started: https://difora.eu/docs/getting-started.html

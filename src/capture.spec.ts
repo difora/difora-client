@@ -50,6 +50,28 @@ describe('capture helpers', () => {
       else process.env['DIFORA_SCREENSHOT_DIR'] = previous;
     }
   });
+  it('warns on an existing same-width capture and still writes the screenshot', async () => {
+    const warning = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    try {
+      await capture(page, 'home', { dir, viewportSuffix: true });
+      expect(warning).not.toHaveBeenCalled();
+      const second = {
+        ...page,
+        viewportSize: () => ({ width: 1280, height: 900 }),
+      };
+      await capture(second, 'home', { dir, viewportSuffix: true });
+      expect(warning).toHaveBeenCalledWith(
+        expect.stringContaining('overwriting screenshot'),
+      );
+      expect(screenshot).toHaveBeenCalledTimes(2);
+      await capture(page, 'home-firefox', { dir, viewportSuffix: true });
+      expect(warning).toHaveBeenCalledTimes(1);
+    } finally {
+      warning.mockRestore();
+    }
+  });
   it.each([
     '',
     '..',
@@ -134,10 +156,23 @@ describe('capture helpers', () => {
     await fixtures.diforaScreenshot(
       { page },
       async (
-        capture: (name: string, options: { dir: string }) => Promise<string>,
+        capture: (
+          name: string,
+          options: import('./capture').ScreenshotOptions,
+        ) => Promise<string>,
       ) => {
-        expect(await capture('fixture', { dir })).toBe(
-          join(dir, 'fixture.png'),
+        expect(
+          await capture('fixture', {
+            dir,
+            mask: [page],
+            clip: { x: 0, y: 0, width: 100, height: 100 },
+          }),
+        ).toBe(join(dir, 'fixture.png'));
+        expect(screenshot).toHaveBeenCalledWith(
+          expect.objectContaining({
+            mask: [page],
+            clip: { x: 0, y: 0, width: 100, height: 100 },
+          }),
         );
       },
     );
