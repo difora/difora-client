@@ -27,10 +27,6 @@ an owner's opt-in and may be cached outside the EU.
 
 ## Public source and installation
 
-Source: [github.com/difora/difora-client](https://github.com/difora/difora-client).
-This MIT-licensed repository contains the standalone npm client and capture helpers.
-The hosted service is maintained separately. No service code or customer data is included.
-
 For a manual download, get the package and `SHA256SUMS` from
 [GitHub Releases](https://github.com/difora/difora-client/releases).
 The release notes explain checksum verification and installation. GitHub releases and
@@ -99,9 +95,6 @@ transferred again. Network errors, 429 and 5xx responses are retried with back-o
 | 3    | timed out waiting for the comparison (it continues on the server)   |
 
 `--exit-zero-on-changes` makes pending review non-blocking; `--no-wait` returns right after upload.
-
-Zero runtime dependencies. MIT licensed. Operated by Missus GmbH, Graz, Austria.
-Full CI recipes: https://difora.eu/docs/ci.html
 
 ## Capture helpers (0.4.0+)
 
