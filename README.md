@@ -74,10 +74,16 @@ difora --version | --help
 - `DIFORA_API_URL` (or `--api-url`): defaults to `https://app.difora.eu/api`.
 - Branch and commit are detected on GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI,
   Jenkins, Azure DevOps, Travis, Buildkite and Drone (pull/merge requests report the source branch
-  and its head commit), or from the local git checkout. `DIFORA_BRANCH` / `DIFORA_COMMIT` override.
+  and its head commit), or from the local Git checkout when run outside CI.
+  `DIFORA_BRANCH` / `DIFORA_COMMIT` override.
 - `--post-status` posts the result as a commit status using the pipeline's own credentials
   (`GITHUB_TOKEN`, or `DIFORA_STATUS_TOKEN` for GitLab/Bitbucket) — for repository hosts the
   Difora service cannot reach.
+
+**Baseline environment:** approve baselines only from builds captured in CI, or in the
+exact same environment CI uses. Laptop font rendering can differ from Linux CI and make
+every CI run show visual changes. To test locally, use a scratch branch with
+`npx difora upload ./screenshots --branch local-check` and leave that build unapproved.
 
 Snapshot names are the PNG paths relative to `<dir>` without the extension, so `login/desktop.png`
 becomes `login/desktop`. Every file is hashed (SHA-256); images the server already has are not
