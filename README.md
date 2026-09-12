@@ -50,7 +50,7 @@ npm pack
 Then, in your screenshot project, install the generated tarball:
 
 ```sh
-npm install --save-dev /path/to/difora-client/difora-0.8.0.tgz
+npm install --save-dev /path/to/difora-client/difora-0.8.1.tgz
 npx difora --version
 ```
 

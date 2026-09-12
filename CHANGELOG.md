@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1
+
+Updated installation documentation for the published npm client.
+
+- Use `npm install --save-dev difora` and link directly to the npm package.
+- Explain committing the package manifest and lockfile and running `npm ci` before capture and upload in CI.
+- Remove the temporary npm-unavailable message; retain source builds and release downloads as optional installation methods.
+
+CLI behavior, capture helpers and runtime dependencies are unchanged.
+
 ## 0.8.0
 
 First public source release of the standalone Difora CLI and capture helpers.

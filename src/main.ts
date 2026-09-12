@@ -70,7 +70,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.8.0';
+const VERSION = '0.8.1';
 const MAX_ATTEMPTS = 5;
 const FINAL_STATUSES = [
   'passed',

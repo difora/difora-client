@@ -26,7 +26,7 @@ npm publication is a separate maintainer action. After configuring the npm trust
 publisher for `release.yml`, dispatch that workflow **on the version tag**, for example:
 
 ```sh
-gh workflow run release.yml --repo difora/difora-client --ref v0.8.0
+gh workflow run release.yml --repo difora/difora-client --ref v0.8.1
 ```
 
 The workflow validates the repository and package version before publishing with provenance.
