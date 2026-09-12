@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0
+
+- Show a complete GitHub Actions workflow with full checkout history and pull requests plus main-branch pushes to avoid duplicate uploads.
+- Clarify Chromium installation, matching Playwright package versions and generated-directory ignores.
+- Add local token and scratch-branch guidance, plus links to the documentation index and two-server, no-build and SPA capture recipes.
+- CLI and capture-helper behavior are unchanged.
+
 ## 0.8.3
 
 - Warn before replacing an existing screenshot; use distinct names for each viewport, browser or theme.

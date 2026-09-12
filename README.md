@@ -14,16 +14,31 @@ npm install --save-dev difora
 Commit `package.json` and `package-lock.json`, then run `npm ci` in CI before capture and upload.
 
 ```yaml
-# .github/workflows/ci.yml
-- run: npx playwright test # produces ./screenshots/*.png
-- run: npx difora upload ./screenshots
-  env:
-    DIFORA_TOKEN: ${{ secrets.DIFORA_TOKEN }}
+# .github/workflows/visual.yml
+name: Visual review
+on: { push: { branches: [main] }, pull_request: {} }
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 } # merge-base comparisons need full history
+      - uses: actions/setup-node@v5
+        with: { node-version: 24 }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx playwright test # produces ./screenshots/*.png
+      - run: npx difora upload ./screenshots
+        env:
+          DIFORA_TOKEN: ${{ secrets.DIFORA_TOKEN }}
 ```
 
-Start with the [getting-started guide](https://difora.eu/docs/getting-started.html).
-The CI fragment above follows checkout, Node setup, `npm ci` and
-`npx playwright install --with-deps`; build your site before capture.
+Browse the [docs](https://difora.eu/docs/) or start with the [getting-started guide](https://difora.eu/docs/getting-started.html).
+The workflow uses the capture config and your site's `build` script; omit the build step
+for a no-build site. It fetches full history for merge-base comparisons. Locally, install
+Chromium with `npx playwright install chromium`; in CI use
+`npx playwright install --with-deps chromium`. Install other browsers only if your projects use them.
 See the [full GitHub Actions job](https://difora.eu/docs/ci.html#github).
 Customer-selected integrations receive build metadata; public PR thumbnails require
 an owner's opt-in and may be cached outside the EU.
@@ -49,7 +64,7 @@ npm pack
 Then, in your screenshot project, install the generated tarball:
 
 ```sh
-npm install --save-dev /path/to/difora-client/difora-0.8.3.tgz
+npm install --save-dev /path/to/difora-client/difora-0.9.0.tgz
 npx difora --version
 ```
 
@@ -83,14 +98,20 @@ difora --version | --help
 **Baseline environment:** approve baselines only from builds captured in CI, or in the
 exact same environment CI uses. Laptop font rendering can differ from Linux CI and make
 every CI run show visual changes. To test locally, use a scratch branch with
-`npx difora upload ./screenshots --branch local-check` and leave that build unapproved.
+the command below and leave that build unapproved. Replace `<token>` with your project token;
+keep it only in a shell variable or CI secret, never in a file.
+
+```sh
+DIFORA_TOKEN='<token>' npx difora upload ./screenshots --branch local-check
+```
 
 Snapshot names are the PNG paths relative to `<dir>` without the extension, so `login/desktop.png`
 becomes `login/desktop`. Every file is hashed (SHA-256); images the server already has are not
 transferred again. Network errors, 429 and 5xx responses are retried with back-off.
 Each submitted snapshot counts once when a build starts comparison, including unchanged
 images and all shards, against your organization's UTC calendar-month allowance; a new
-build attempt counts again. [Usage and retries](https://difora.eu/docs/cli.html#usage).
+build attempt counts again. Run pull requests and pushes to `main` only so a PR branch is
+not uploaded twice; each new build counts toward snapshot usage. [Usage and retries](https://difora.eu/docs/cli.html#usage).
 
 ## Exit codes
 
@@ -105,7 +126,15 @@ build attempt counts again. [Usage and retries](https://difora.eu/docs/cli.html#
 
 ## Capture helpers (0.4.0+)
 
-Install Difora as a dev dependency alongside your browser test runner.
+Install Difora as a dev dependency alongside your browser test runner. If the repo already
+uses `playwright`, check `npm ls playwright` and install `@playwright/test` at that exact
+version: `npm install --save-dev @playwright/test@<same version as playwright>`.
+Add `screenshots/`, `test-results/` and `playwright-report/` to `.gitignore`.
+
+For multiple apps, use a `webServer` array and absolute URLs in tests. No-build sites can
+serve their source directory directly; SPAs can use http-server's
+`-P http://127.0.0.1:PORT?` fallback, with the server's port and trailing `?`.
+See the [two-server recipe](https://difora.eu/docs/capture.html#monorepos).
 
 ```ts
 import { diforaScreenshot } from 'difora/playwright';
