@@ -4,6 +4,15 @@ Command-line client for [Difora](https://difora.eu) — visual regression testin
 screenshot comparison and storage. Your CI renders the screenshots; the CLI uploads only what changed and reports the
 result of the comparison against your approved baselines.
 
+Install [difora from npm](https://www.npmjs.com/package/difora) in your screenshot project
+(Node 20 or newer):
+
+```sh
+npm install --save-dev difora
+```
+
+Commit `package.json` and `package-lock.json`, then run `npm ci` in CI before capture and upload.
+
 ```yaml
 # .github/workflows/ci.yml
 - run: npx playwright test # produces ./screenshots/*.png
@@ -13,8 +22,6 @@ result of the comparison against your approved baselines.
 ```
 
 Start with the [getting-started guide](https://difora.eu/docs/getting-started.html).
-Node 20 or newer is required. While npm distribution is unavailable, install a supplied
-release tarball with `npm install --save-dev ./difora-0.8.0.tgz` before running the examples.
 Customer-selected integrations receive build metadata; public PR thumbnails require
 an owner's opt-in and may be cached outside the EU.
 
@@ -24,12 +31,12 @@ Source: [github.com/difora/difora-client](https://github.com/difora/difora-clien
 This MIT-licensed repository contains the standalone npm client and capture helpers.
 The hosted service is maintained separately. No service code or customer data is included.
 
-Download the package and `SHA256SUMS` from
+For a manual download, get the package and `SHA256SUMS` from
 [GitHub Releases](https://github.com/difora/difora-client/releases).
 The release notes explain checksum verification and installation. GitHub releases and
 npm publication are separate.
 
-Alternatively, while npm publication is pending, build from public source:
+To build the client yourself, use the public source:
 
 ```sh
 git clone https://github.com/difora/difora-client.git
@@ -47,7 +54,6 @@ npm install --save-dev /path/to/difora-client/difora-0.8.0.tgz
 npx difora --version
 ```
 
-After registry publication, use `npm install --save-dev difora` instead.
 See [CONTRIBUTING.md](https://github.com/difora/difora-client/blob/main/CONTRIBUTING.md)
 for contribution and release conventions.
 
