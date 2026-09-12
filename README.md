@@ -50,9 +50,6 @@ npm install --save-dev /path/to/difora-client/difora-0.8.1.tgz
 npx difora --version
 ```
 
-See [CONTRIBUTING.md](https://github.com/difora/difora-client/blob/main/CONTRIBUTING.md)
-for contribution and release conventions.
-
 ## Usage
 
 ```
