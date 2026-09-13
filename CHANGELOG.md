@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0
+
+## 0.10.0
+
+- Record optional browser, viewport, device scale factor, color preference, locale, time zone and screenshot settings with the Playwright and Storybook helpers.
+- Add stable explicit variants and configurable capture defaults. Existing names and PNG-only uploads stay compatible.
+- Bind metadata sidecars to their PNG hashes, refuse duplicate recorded captures, and reject incomplete or stale capture output before upload.
+- Negotiate server metadata support and validate the complete manifest before creating a build. Requires a server with capture metadata version 1 enabled.
+- Document variant identity, clean attempt directories, declared environment labels and the generic producer sidecar format.
+
 ## 0.9.0
 
 - Show a complete GitHub Actions workflow with full checkout history and pull requests plus main-branch pushes to avoid duplicate uploads.

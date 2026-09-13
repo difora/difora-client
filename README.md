@@ -154,6 +154,57 @@ do not delete existing files. Wait for your app to be ready before capturing.
 `viewportSuffix` adds only the width, not the Playwright project name, height, browser
 or theme. Use distinct widths or explicit name prefixes; identical paths overwrite.
 
+### Capture metadata and explicit variants (0.10.0+)
+
+Opt in to record the browser, viewport, device scale factor, color preference,
+locale, time zone and screenshot settings that the helper can observe:
+
+```ts
+const test = withDifora(base, {
+  captureMetadata: {
+    environment: { id: 'visual-ci', revision: 'image-2026-09' },
+  },
+});
+test('home', async ({ diforaScreenshot }) => {
+  await diforaScreenshot('home', {
+    variant: 'chromium-desktop-dark',
+    captureMetadata: { theme: 'dark' },
+  });
+});
+```
+
+The options also work with direct `diforaScreenshot` and `createPostVisit`.
+Per-capture metadata fields override wrapper defaults. `captureMetadata: false`
+disables recording when no variant is supplied. Existing calls remain unchanged.
+
+Metadata alone preserves the filename and baseline identity. An explicit `variant`
+enables recording and adds `@v-<slug>-<digest>` before `.png`, after any width suffix.
+Use a stable variant for each browser/viewport/theme combination. Changing a variant
+creates a different snapshot name; changing a browser version does not. Adding a
+variant to an established name appears as a new snapshot and a removed old name.
+`viewportSuffix` alone still records only width in the name.
+
+Recorded captures refuse to overwrite existing destinations. Use a clean output
+directory per CI run, shard and retry attempt. Upload only completed captures and
+preserve each PNG together with its `.png.difora.json` sidecar in CI artifacts.
+The sidecar contains a SHA-256 binding to the PNG. Orphaned, stale, malformed or
+oversized sidecars and incomplete capture locks fail before build creation. PNG-only
+uploads keep working. The CLI checks server support before sending metadata and
+fails with exit code 2 if the server is older or recording is disabled; it never
+silently drops the evidence. Manifests exceeding 5 MiB need fixed-count sharding.
+
+The app’s **Variants** panel filters browser, complete viewport, app theme, explicit
+variant and environment. **Capture details** compares the recorded baseline and
+current values, including earlier discussion comparisons. Missing values remain
+“Not recorded.” Metadata is client-reported evidence, not a guarantee of identical
+rendering. App `theme`, renderer `os` and `environment` are declared by the caller;
+OS is never inferred from the uploader. Use non-secret labels; no tokens, URLs,
+DOM content, locator text or environment dumps belong in metadata.
+
+Generic PNG producers can write the same version 1 sidecar contract. See the
+[capture metadata reference](https://difora.eu/docs/capture.html#metadata) for the
+bounded fields and an envelope example.
+
 Capture recipes: https://difora.eu/docs/capture.html
 Getting started: https://difora.eu/docs/getting-started.html
 

@@ -1,10 +1,14 @@
-import type { ScreenshotPage } from './playwright';
+export type { CaptureMetadata, CaptureMetadataOptions } from './playwright';
+import type { ScreenshotPage, ScreenshotOptions } from './playwright';
 export interface StoryContext {
   id: string;
   title: string;
   name: string;
 }
-export interface PostVisitOptions {
+export interface PostVisitOptions extends Omit<
+  ScreenshotOptions<never>,
+  'mask' | 'clip'
+> {
   fullPage?: boolean;
   viewportSuffix?: boolean;
   dir?: string;

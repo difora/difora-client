@@ -1,5 +1,40 @@
+/** Versioned, client-reported capture evidence. Never part of a baseline identity. */
+export interface CaptureMetadata {
+  version: 1;
+  source: 'helper' | 'provided';
+  variant?: string;
+  browser?: { name: string; version?: string };
+  viewport?: { width: number; height: number };
+  deviceScaleFactor?: number;
+  colorScheme?: 'light' | 'dark' | 'no-preference';
+  theme?: string;
+  locale?: string;
+  timezone?: string;
+  os?: { name: string; version?: string };
+  environment?: { id: string; revision?: string };
+  capture?: {
+    fullPage?: boolean;
+    clip?: { x: number; y: number; width: number; height: number };
+    animations?: 'disabled' | 'allow';
+    caret?: 'hide' | 'initial';
+    maskLocatorCount?: number;
+  };
+  producer?: { name: string; version: string };
+}
+
+export type CaptureMetadataOptions = Pick<
+  CaptureMetadata,
+  'theme' | 'os' | 'environment'
+>;
 /** Browser types are structural; this module does not import or load Playwright. */
 export interface ScreenshotPage<Mask = unknown> {
+  context?(): {
+    browser?(): {
+      browserType?(): { name(): string };
+      version?(): string;
+    } | null;
+  };
+  evaluate?(fn: () => Record<string, unknown>): Promise<unknown>;
   screenshot(options: {
     path: string;
     type: 'png';
@@ -12,6 +47,8 @@ export interface ScreenshotPage<Mask = unknown> {
   viewportSize?(): { width: number; height: number } | null;
 }
 export interface ScreenshotOptions<Mask = unknown> {
+  captureMetadata?: boolean | CaptureMetadataOptions;
+  variant?: string;
   fullPage?: boolean;
   mask?: Mask[];
   clip?: { x: number; y: number; width: number; height: number };
@@ -59,4 +96,5 @@ export type DiforaTest<T extends Callable> = CaptureCalls<T> & {
 /** Apply to your test after defining existing custom fixtures. */
 export function withDifora<T extends Callable & { extend: Callable }>(
   base: T,
+  defaults?: ScreenshotOptions,
 ): DiforaTest<T>;

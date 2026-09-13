@@ -1,4 +1,15 @@
 import { loadConfig } from './config';
+import {
+  collectScreenshots,
+  readUploadPng,
+  type ScreenshotFile,
+} from './capture-files';
+import {
+  MAX_MANIFEST_BYTES,
+  MAX_CAPTURE_METADATA_BYTES,
+  utf8Bytes,
+  type CaptureMetadataCapability,
+} from './capture-metadata';
 /**
  * Difora CLI — uploads a directory of PNG screenshots from CI and reports the result.
  *
@@ -16,9 +27,7 @@ import { loadConfig } from './config';
  */
 import { execFileSync } from 'child_process';
 import { mergeBase } from './git';
-import { createHash } from 'crypto';
-import { lstatSync, readdirSync, readFileSync } from 'fs';
-import { join, relative, sep } from 'path';
+import { readFileSync } from 'fs';
 import {
   detectCi,
   parallelOptions,
@@ -70,7 +79,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.9.0';
+const VERSION = '0.10.0';
 const MAX_ATTEMPTS = 5;
 const FINAL_STATUSES = [
   'passed',
@@ -238,46 +247,6 @@ function positiveInt(flag: string, value: string): number {
   return n;
 }
 
-interface ScreenshotFile {
-  name: string;
-  path: string;
-  hash: string;
-}
-
-/** PNG files under `dir` (symlinks are skipped), named by their relative path without extension. */
-function collectPngs(dir: string): ScreenshotFile[] {
-  const results: ScreenshotFile[] = [];
-  const walk = (current: string) => {
-    for (const entry of readdirSync(current)) {
-      const full = join(current, entry);
-      const stat = lstatSync(full);
-      if (stat.isSymbolicLink()) {
-        continue;
-      }
-      if (stat.isDirectory()) {
-        walk(full);
-      } else if (entry.toLowerCase().endsWith('.png')) {
-        const name = relative(dir, full)
-          .split(sep)
-          .join('/')
-          .replace(/\.png$/i, '');
-        const hash = createHash('sha256')
-          .update(readFileSync(full))
-          .digest('hex');
-        results.push({ name, path: full, hash });
-      }
-    }
-  };
-  try {
-    walk(dir);
-  } catch (err) {
-    fail(
-      `cannot read ${dir}: ${String(err instanceof Error ? err.message : err)}`,
-    );
-  }
-  return results.sort((a, b) => a.name.localeCompare(b.name));
-}
-
 class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -377,7 +346,7 @@ async function uploadMissing(
         opts,
         'POST',
         `/ci/builds/${buildId}/images/${file.hash}`,
-        readFileSync(file.path),
+        readUploadPng(file),
       );
       done++;
       if (done % 25 === 0) log(`uploaded ${done} images`);
@@ -425,7 +394,47 @@ async function safePostStatus(
 
 async function upload(opts: CliOptions): Promise<never> {
   const config = loadConfig(opts.dir, opts.config);
-  const files = collectPngs(opts.dir);
+  const files = (() => {
+    try {
+      return collectScreenshots(opts.dir);
+    } catch (error) {
+      return fail((error as Error).message);
+    }
+  })();
+  const manifestBody = {
+    snapshots: files.map((f) => ({
+      name: f.name,
+      hash: f.hash,
+      ...(f.captureMetadata ? { captureMetadata: f.captureMetadata } : {}),
+    })),
+    rules: config.rules,
+    shardIndex: opts.shardIndex,
+  };
+  const manifestBytes = utf8Bytes(JSON.stringify(manifestBody));
+  if (manifestBytes > MAX_MANIFEST_BYTES)
+    fail(
+      'Manifest exceeds 5 MiB. Use fixed-count sharding and keep PNGs with their sidecars.',
+    );
+  if (files.some((f) => f.captureMetadata)) {
+    const project = await api<{
+      capabilities?: { captureMetadata?: CaptureMetadataCapability };
+    }>(opts, 'GET', '/ci/project');
+    const capability = project.capabilities?.captureMetadata;
+    if (
+      !Array.isArray(capability?.versions) ||
+      !capability.versions.includes(1)
+    )
+      fail(
+        'This server does not support capture metadata version 1 or it is disabled. Upgrade or enable the server before uploading this capture.',
+      );
+    if (
+      !(capability.maxMetadataBytes >= MAX_CAPTURE_METADATA_BYTES) ||
+      !(capability.maxManifestBytes >= manifestBytes)
+    )
+      fail(
+        'Capture metadata exceeds the server capability limits. Use a compatible server and fixed-count sharding.',
+      );
+  }
   if (files.length === 0) {
     fail(`no .png files found under ${opts.dir}`);
   }
@@ -479,11 +488,7 @@ async function upload(opts: CliOptions): Promise<never> {
     opts,
     'POST',
     `/ci/builds/${build.buildId}/manifest`,
-    {
-      snapshots: files.map((f) => ({ name: f.name, hash: f.hash })),
-      rules: config.rules,
-      shardIndex: opts.shardIndex,
-    },
+    manifestBody,
   );
   const missing = new Set(manifest.missingHashes);
   const toUpload = files.filter((f) => missing.has(f.hash));
