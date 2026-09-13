@@ -25,7 +25,7 @@ export async function observeCapture(
     source: 'helper',
     ...declared,
     ...(options.variant === undefined ? {} : { variant: options.variant }),
-    producer: { name: 'difora', version: '0.10.0' },
+    producer: { name: 'difora', version: '0.10.1' },
     capture: {
       fullPage: options.fullPage ?? false,
       ...(options.clip ? { clip: options.clip } : {}),

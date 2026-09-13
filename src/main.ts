@@ -79,7 +79,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.10.0';
+const VERSION = '0.10.1';
 const MAX_ATTEMPTS = 5;
 const FINAL_STATUSES = [
   'passed',

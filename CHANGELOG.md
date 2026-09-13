@@ -1,8 +1,17 @@
 # Changelog
 
-## 0.10.0
+## 0.10.1
 
-## 0.10.0
+- Record optional browser, viewport, device scale factor, color preference, locale, time zone and screenshot settings with the Playwright and Storybook helpers.
+- Add stable explicit variants and configurable capture defaults. Existing names and PNG-only uploads stay compatible.
+- Bind metadata sidecars to their PNG hashes, refuse duplicate recorded captures, and reject incomplete or stale capture output before upload.
+- Negotiate server metadata support and validate the complete manifest before creating a build. Requires a server with capture metadata version 1 enabled.
+- Document variant identity, clean attempt directories, declared environment labels and the generic producer sidecar format.
+- Correct release notes for the first metadata client release. The v0.10.0 release preparation failed before publishing any package assets.
+
+## 0.10.0 (unreleased)
+
+Release preparation rejected duplicated notes before any package assets were published. The corrected release is 0.10.1.
 
 - Record optional browser, viewport, device scale factor, color preference, locale, time zone and screenshot settings with the Playwright and Storybook helpers.
 - Add stable explicit variants and configurable capture defaults. Existing names and PNG-only uploads stay compatible.

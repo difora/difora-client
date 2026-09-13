@@ -154,7 +154,7 @@ do not delete existing files. Wait for your app to be ready before capturing.
 `viewportSuffix` adds only the width, not the Playwright project name, height, browser
 or theme. Use distinct widths or explicit name prefixes; identical paths overwrite.
 
-### Capture metadata and explicit variants (0.10.0+)
+### Capture metadata and explicit variants (0.10.1+)
 
 Opt in to record the browser, viewport, device scale factor, color preference,
 locale, time zone and screenshot settings that the helper can observe:
