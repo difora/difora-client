@@ -1,6 +1,6 @@
 {
   "name": "difora",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Difora CLI — upload screenshots from CI for EU-only visual regression testing.",
   "license": "MIT",
   "homepage": "https://difora.eu",

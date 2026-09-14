@@ -25,4 +25,17 @@ describe('environment warning', () => {
       environmentWarning({ environmentDifferent: 1, environmentFields: null }),
     ).toContain('1 snapshot');
   });
+  it('names native renderer differences without exposing declared device values', () => {
+    expect(
+      environmentWarning({
+        environmentDifferent: 1,
+        environmentFields: [
+          'platform',
+          'renderer.version',
+          'device.model',
+          'document.dpi',
+        ],
+      }),
+    ).toContain('(Platform, Renderer version, Device model, Document DPI)');
+  });
 });

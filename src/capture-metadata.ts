@@ -1,6 +1,6 @@
 /** Versioned, client-reported capture evidence. Never part of a baseline identity. */
 export interface CaptureMetadata {
-  version: 1;
+  version: 1 | 2;
   source: 'helper' | 'provided';
   variant?: string;
   browser?: { name: string; version?: string };
@@ -20,6 +20,24 @@ export interface CaptureMetadata {
     maskLocatorCount?: number;
   };
   producer?: { name: string; version: string };
+  platform?: 'web' | 'ios' | 'android' | 'flutter' | 'desktop' | 'document';
+  device?: {
+    model?: string;
+    runtime?: 'simulator' | 'emulator' | 'device' | 'host-render';
+  };
+  display?: {
+    scale?: number;
+    density?: number;
+    orientation?: 'portrait' | 'landscape';
+    logicalWidth?: number;
+    logicalHeight?: number;
+  };
+  fontScale?: number;
+  framework?: { name: string; version?: string };
+  renderer?: { name: string; version?: string };
+  surface?: 'page' | 'screen' | 'window' | 'element' | 'document-page';
+  document?: { page?: number; pages?: number; dpi?: number };
+  group?: string;
 }
 
 export type CaptureMetadataOptions = Pick<
@@ -32,6 +50,7 @@ export interface CaptureMetadataCapability {
   maxManifestBytes: number;
 }
 export const MAX_CAPTURE_METADATA_BYTES = 2048;
+export const MAX_CAPTURE_METADATA_V2_BYTES = 3072;
 export const MAX_CAPTURE_SIDECAR_BYTES = 4096;
 export const MAX_MANIFEST_BYTES = 5 * 1024 * 1024;
 
@@ -107,6 +126,18 @@ function identity(
   return result;
 }
 
+const v2Keys = [
+  'platform',
+  'device',
+  'display',
+  'fontScale',
+  'framework',
+  'renderer',
+  'surface',
+  'document',
+  'group',
+] as const;
+
 /** Validates before reconstructing in fixed key order; never silently strips unknown input. */
 export function validateCaptureMetadata(value: unknown): CaptureMetadata {
   const o = object(
@@ -126,12 +157,15 @@ export function validateCaptureMetadata(value: unknown): CaptureMetadata {
       'environment',
       'capture',
       'producer',
+      ...v2Keys,
     ],
     'record',
   );
-  if (o['version'] !== 1) invalid('unsupported version');
+  if (o['version'] !== 1 && o['version'] !== 2) invalid('unsupported version');
+  if (o['version'] === 1 && v2Keys.some((k) => k in o))
+    invalid('version 2 fields in version 1');
   const m: CaptureMetadata = {
-    version: 1,
+    version: o['version'],
     source: choice(o['source'], ['helper', 'provided'], 'source'),
   };
   if ('variant' in o) m.variant = label(o['variant'], 'variant');
@@ -224,8 +258,120 @@ export function validateCaptureMetadata(value: unknown): CaptureMetadata {
       'producer',
       true,
     ) as CaptureMetadata['producer'];
-  if (utf8Bytes(JSON.stringify(m)) > MAX_CAPTURE_METADATA_BYTES)
-    invalid('record exceeds 2048 UTF-8 bytes');
+  if (m.version === 2) {
+    if ('platform' in o)
+      m.platform = choice(
+        o['platform'],
+        ['web', 'ios', 'android', 'flutter', 'desktop', 'document'],
+        'platform',
+      );
+    if ('device' in o) {
+      const d = object(o['device'], ['model', 'runtime'], 'device');
+      m.device = {};
+      if ('model' in d) m.device.model = label(d['model'], 'device.model');
+      if ('runtime' in d)
+        m.device.runtime = choice(
+          d['runtime'],
+          ['simulator', 'emulator', 'device', 'host-render'],
+          'device.runtime',
+        );
+    }
+    if ('display' in o) {
+      const d = object(
+        o['display'],
+        ['scale', 'density', 'orientation', 'logicalWidth', 'logicalHeight'],
+        'display',
+      );
+      m.display = {};
+      if ('scale' in d)
+        m.display.scale = number(
+          d['scale'],
+          'display.scale',
+          Number.MIN_VALUE,
+          16,
+        );
+      if ('density' in d)
+        m.display.density = number(d['density'], 'display.density', 1, 2400);
+      if ('orientation' in d)
+        m.display.orientation = choice(
+          d['orientation'],
+          ['portrait', 'landscape'],
+          'display.orientation',
+        );
+      if ('logicalWidth' in d || 'logicalHeight' in d) {
+        m.display.logicalWidth = number(
+          d['logicalWidth'],
+          'display.logicalWidth',
+          Number.MIN_VALUE,
+          32768,
+        );
+        m.display.logicalHeight = number(
+          d['logicalHeight'],
+          'display.logicalHeight',
+          Number.MIN_VALUE,
+          32768,
+        );
+      }
+      if (
+        m.deviceScaleFactor !== undefined &&
+        m.display.scale !== undefined &&
+        m.deviceScaleFactor !== m.display.scale
+      )
+        invalid('display.scale and deviceScaleFactor disagree');
+    }
+    if ('fontScale' in o)
+      m.fontScale = number(o['fontScale'], 'fontScale', Number.MIN_VALUE, 16);
+    if ('framework' in o) m.framework = identity(o['framework'], 'framework');
+    if ('renderer' in o) m.renderer = identity(o['renderer'], 'renderer');
+    if ('surface' in o)
+      m.surface = choice(
+        o['surface'],
+        ['page', 'screen', 'window', 'element', 'document-page'],
+        'surface',
+      );
+    if ('document' in o) {
+      if (m.platform !== 'document')
+        invalid('document requires platform document');
+      const d = object(o['document'], ['page', 'pages', 'dpi'], 'document');
+      m.document = {};
+      if ('page' in d)
+        m.document.page = number(d['page'], 'document.page', 1, 100000, true);
+      if ('pages' in d)
+        m.document.pages = number(
+          d['pages'],
+          'document.pages',
+          1,
+          100000,
+          true,
+        );
+      if ('dpi' in d)
+        m.document.dpi = number(d['dpi'], 'document.dpi', 1, 2400);
+      if (
+        m.document.page !== undefined &&
+        m.document.pages !== undefined &&
+        m.document.page > m.document.pages
+      )
+        invalid('document.page exceeds pages');
+    }
+    if ('group' in o) m.group = label(o['group'], 'group');
+    if (
+      m.platform &&
+      m.platform !== 'web' &&
+      (m.browser ||
+        m.capture ||
+        m.viewport ||
+        m.deviceScaleFactor !== undefined)
+    )
+      invalid('web fields require platform web or unspecified');
+    if (m.surface === 'document-page' && m.platform !== 'document')
+      invalid('document-page requires platform document');
+  }
+  const limit =
+    m.version === 1
+      ? MAX_CAPTURE_METADATA_BYTES
+      : MAX_CAPTURE_METADATA_V2_BYTES;
+  if (utf8Bytes(JSON.stringify(m)) > limit)
+    invalid(`record exceeds ${limit} UTF-8 bytes`);
   return m;
 }
 

@@ -288,3 +288,30 @@ still count. All shards and retries must use the same rules; use a new parallel 
 config. Invalid config exits 2 before uploading. Limits: 1 MB, 200 rules, 50 regions per rule.
 
 Patterns, precedence, editor and schema: https://difora.eu/docs/config.html
+
+## Native, mobile and document captures
+
+CLI 0.12.0 adds a local `annotate` command. Record PNGs with your own tools, put
+device combinations in stable variant directories, then attach declared metadata:
+
+```sh
+npx difora annotate screenshots/ios-dark --platform ios \
+  --device-model "iPhone 15" --runtime simulator --os iOS --os-version 17.5 \
+  --scale 3 --theme Dark --surface screen --dry-run
+# Remove --dry-run to write hash-bound sidecars after checking your actual settings.
+npx difora upload screenshots
+```
+
+Annotation never changes PNGs or names, infers device values, overwrites sidecars or
+contacts a server. Existing/stale/orphan sidecars and incomplete capture locks stop
+the operation. Errors exit 2. `--variant` only records a label; directory/file names
+remain the baseline identity. Use clean, completed capture output.
+
+`difora annotate --help` lists device, display, OS, framework, renderer, document and
+environment flags. Version 2 metadata allows 3,072 UTF-8 bytes, while version 1 stays
+valid at 2,048. Server support is checked before build creation. Native review adds
+Platform/Device filters and declared capture details.
+
+[Native capture recipes](https://difora.eu/docs/native-capture.html) cover XCTest,
+Swift snapshots, Paparazzi, Roborazzi, Compose Preview, Flutter, Maestro, Detox and PDF,
+with explicit verification labels and CI guidance.

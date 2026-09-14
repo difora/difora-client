@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0
+
+Add declared capture metadata for native, mobile, desktop and document screenshots.
+
+- `difora annotate <dir>` writes hash-bound metadata beside completed PNGs, with dry-run validation, explicit device/renderer settings and no overwrite or renaming.
+- Metadata version 2 adds platform, device, display, framework, renderer and document fields. Version 1 remains compatible, and uploads check every metadata version and byte limit before creating a build.
+- Environment warnings recognize native renderer differences. The README links the native capture recipes and explains stable variant naming and server compatibility.
+
 ## 0.11.0
 
 - Report recorded capture-environment differences after completed uploads, with a bounded count and field labels.

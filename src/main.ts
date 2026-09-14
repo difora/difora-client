@@ -1,3 +1,4 @@
+import { annotate } from './annotate';
 import { environmentWarning } from './environment-warning';
 import { loadConfig } from './config';
 import {
@@ -7,7 +8,6 @@ import {
 } from './capture-files';
 import {
   MAX_MANIFEST_BYTES,
-  MAX_CAPTURE_METADATA_BYTES,
   utf8Bytes,
   type CaptureMetadataCapability,
 } from './capture-metadata';
@@ -83,7 +83,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.11.0';
+const VERSION = '0.12.0';
 const MAX_ATTEMPTS = 5;
 const FINAL_STATUSES = [
   'passed',
@@ -101,6 +101,7 @@ Usage:
                       [--parallel] [--shard <i>/<n>] [--parallel-id <key>] [--shard-timeout <minutes>]
                       [--base-branch <name>] [--base-commit <sha>] [--no-merge-base] [--config <file>] [--pr <number>]
   difora doctor       Show detected CI values and check the API connection
+  difora annotate <dir> Write declared native/device metadata beside PNGs
   difora --version | --help
 
 Environment: DIFORA_TOKEN (project token), DIFORA_API_URL (default https://app.difora.eu/api),
@@ -424,20 +425,24 @@ async function upload(opts: CliOptions): Promise<never> {
       capabilities?: { captureMetadata?: CaptureMetadataCapability };
     }>(opts, 'GET', '/ci/project');
     const capability = project.capabilities?.captureMetadata;
-    if (
-      !Array.isArray(capability?.versions) ||
-      !capability.versions.includes(1)
-    )
-      fail(
-        'This server does not support capture metadata version 1 or it is disabled. Upgrade or enable the server before uploading this capture.',
-      );
-    if (
-      !(capability.maxMetadataBytes >= MAX_CAPTURE_METADATA_BYTES) ||
-      !(capability.maxManifestBytes >= manifestBytes)
-    )
-      fail(
-        'Capture metadata exceeds the server capability limits. Use a compatible server and fixed-count sharding.',
-      );
+    for (const file of files) {
+      const metadata = file.captureMetadata;
+      if (!metadata) continue;
+      if (
+        !Array.isArray(capability?.versions) ||
+        !capability.versions.includes(metadata.version)
+      )
+        fail(
+          `This server does not support capture metadata version ${metadata.version} or it is disabled. Upgrade or enable the server before uploading this capture.`,
+        );
+      if (
+        !(capability.maxMetadataBytes >= utf8Bytes(JSON.stringify(metadata))) ||
+        !(capability.maxManifestBytes >= manifestBytes)
+      )
+        fail(
+          'Capture metadata exceeds the server capability limits. Use a compatible server and fixed-count sharding.',
+        );
+    }
   }
   if (files.length === 0) {
     fail(`no .png files found under ${opts.dir}`);
@@ -602,6 +607,10 @@ async function doctor(opts: CliOptions): Promise<never> {
 }
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'annotate') {
+    annotate(process.argv.slice(3));
+    return;
+  }
   const { command, opts } = parseArgs(process.argv.slice(2));
   if (command === 'doctor') {
     await doctor(opts);

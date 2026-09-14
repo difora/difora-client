@@ -1,6 +1,6 @@
 /** Versioned, client-reported capture evidence. Never part of a baseline identity. */
 export interface CaptureMetadata {
-  version: 1;
+  version: 1 | 2;
   source: 'helper' | 'provided';
   variant?: string;
   browser?: { name: string; version?: string };
@@ -20,6 +20,24 @@ export interface CaptureMetadata {
     maskLocatorCount?: number;
   };
   producer?: { name: string; version: string };
+  platform?: 'web' | 'ios' | 'android' | 'flutter' | 'desktop' | 'document';
+  device?: {
+    model?: string;
+    runtime?: 'simulator' | 'emulator' | 'device' | 'host-render';
+  };
+  display?: {
+    scale?: number;
+    density?: number;
+    orientation?: 'portrait' | 'landscape';
+    logicalWidth?: number;
+    logicalHeight?: number;
+  };
+  fontScale?: number;
+  framework?: { name: string; version?: string };
+  renderer?: { name: string; version?: string };
+  surface?: 'page' | 'screen' | 'window' | 'element' | 'document-page';
+  document?: { page?: number; pages?: number; dpi?: number };
+  group?: string;
 }
 
 export type CaptureMetadataOptions = Pick<

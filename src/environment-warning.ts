@@ -8,6 +8,16 @@ const fieldLabels: Record<string, string> = {
   timezone: 'Time zone',
   'environment.id': 'Environment',
   'environment.revision': 'Environment revision',
+  platform: 'Platform',
+  'renderer.name': 'Renderer',
+  'renderer.version': 'Renderer version',
+  'framework.name': 'Framework',
+  'framework.version': 'Framework version',
+  'device.model': 'Device model',
+  'device.runtime': 'Capture runtime',
+  'display.scale': 'Display scale',
+  'display.density': 'Pixel density',
+  'document.dpi': 'Document DPI',
 };
 
 /** Only fixed labels enter terminal output; metadata values never do. Old servers omit this. */
