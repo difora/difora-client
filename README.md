@@ -208,6 +208,20 @@ bounded fields and an envelope example.
 Capture recipes: https://difora.eu/docs/capture.html
 Getting started: https://difora.eu/docs/getting-started.html
 
+## Environment warnings (0.11.0+)
+
+After a completed upload, the CLI reports how many successfully compared captures
+have a recorded environment difference from their baseline. Browser name/full
+version, OS, device scale, locale, time zone and environment identity are checked.
+A known difference can coexist with missing fields. Unknown-only evidence and
+older servers produce no warning. `--no-wait` does not report an unfinished result.
+
+The warning never changes exit codes or review status. `--json` retains valid JSON
+on stdout and sends the warning to stderr. Build review explains the fields and
+can filter affected snapshots, including identical PNGs with different provenance.
+Use the [pinned capture recipe](https://difora.eu/docs/capture-environment.html)
+to match local and CI renderers. Reported values are evidence, not attestation.
+
 ## Sharded builds (0.5.0+)
 
 Run `difora upload ./screenshots --shard 1/2` in one job and `--shard 2/2` in the other.

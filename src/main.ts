@@ -1,3 +1,4 @@
+import { environmentWarning } from './environment-warning';
 import { loadConfig } from './config';
 import {
   collectScreenshots,
@@ -68,6 +69,9 @@ interface CliOptions {
 }
 
 interface BuildStatus {
+  environmentDifferent?: number;
+  environmentUnknown?: number;
+  environmentFields?: string[];
   prNumber: number | null;
   buildId: number;
   status: string;
@@ -79,7 +83,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.10.1';
+const VERSION = '0.11.0';
 const MAX_ATTEMPTS = 5;
 const FINAL_STATUSES = [
   'passed',
@@ -523,6 +527,8 @@ async function upload(opts: CliOptions): Promise<never> {
     await safePostStatus(statusTarget, status.status, status.url);
   }
   log(`build ${status.status} — ${status.url}`);
+  const environmentNotice = final ? environmentWarning(status) : null;
+  if (environmentNotice) log(environmentNotice);
   if (['passed', 'approved'].includes(status.status)) {
     process.exit(0);
   }

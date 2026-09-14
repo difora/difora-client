@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+
+- Report recorded capture-environment differences after completed uploads, with a bounded count and field labels.
+- Preserve JSON on stdout, send informational warnings to stderr, and keep review decisions and exit codes unchanged.
+- Remain compatible with servers that omit environment summaries and with unfinished `--no-wait` uploads.
+- Document a pinned Playwright container recipe for comparable local and CI capture environments.
+
 ## 0.10.1
 
 - Record optional browser, viewport, device scale factor, color preference, locale, time zone and screenshot settings with the Playwright and Storybook helpers.
