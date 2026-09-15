@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.0
+
+Read build results from your terminal with project-scoped read tokens.
+
+- Add `difora builds` with branch/commit filters, bounded pagination and JSON output.
+- Add `difora inspect <build-number>` and explicit `--build-id` lookup, preserving comparison revisions and original change classifications.
+- Add authenticated PNG downloads into new directories, generated safe filenames and a completion manifest with SHA-256 hashes.
+- Use the separate `DIFORA_READ_TOKEN` environment variable. Read commands cannot upload or make review decisions and exit 0 after successful reading, regardless of review status.
+- Reject redirected image requests, mixed revisions, unsafe output targets and incomplete downloads. Preserve the CLI's zero runtime dependencies and existing upload behavior.
+
+Requires the Difora read API. Setup and API reference: https://difora.eu/docs/api.html.
+
 ## 0.12.0
 
 Add declared capture metadata for native, mobile, desktop and document screenshots.

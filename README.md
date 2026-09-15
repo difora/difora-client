@@ -82,11 +82,16 @@ difora upload <dir> [--branch <name>] [--commit <sha>] [--message <text>]
                     [--base-branch <name>] [--base-commit <sha>] [--no-merge-base]
                     [--config <file>] [--pr <number>]
 difora doctor       Show detected CI values and check the API connection
+difora builds [--branch <name>] [--commit <sha>] [--limit <1-100>] [--before <id>] [--json]
+difora inspect <build-number> [--changed-only] [--json] [--download <new-directory>]
+difora inspect --build-id <id> [--changed-only] [--json] [--download <new-directory>]
 difora --version | --help
 ```
 
 - `DIFORA_TOKEN` (or `--token`): a project token from _Settings → CI tokens_ in the Difora app.
 - `DIFORA_API_URL` (or `--api-url`): defaults to `https://app.difora.eu/api`.
+- `DIFORA_READ_TOKEN`: a separate project read token from _Settings → API access_.
+  Required by `builds` and `inspect`; upload tokens cannot read review evidence.
 - Branch and commit are detected on GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI,
   Jenkins, Azure DevOps, Travis, Buildkite and Drone (pull/merge requests report the source branch
   and its head commit), or from the local Git checkout when run outside CI.
@@ -94,6 +99,33 @@ difora --version | --help
 - `--post-status` posts the result as a commit status using the pipeline's own credentials
   (`GITHUB_TOKEN`, or `DIFORA_STATUS_TOKEN` for GitLab/Bitbucket) — for repository hosts the
   Difora service cannot reach.
+
+### Read results and download images
+
+CLI 0.13.0 adds `builds` and `inspect`. Read tokens are scoped to one project, expire
+after 90 days by default (365 maximum), and show their secret only at creation.
+Discussion text access is optional and off by default. An owner can disable project
+read access and revoke existing tokens. These credentials never approve or upload.
+
+`inspect 42` selects project build number 42; `--build-id 123` explicitly selects
+API build ID 123. Successful reads exit 0 even for unreviewed/rejected builds;
+usage, authorization, transport and download failures exit 2. `--json` writes one
+JSON result to stdout. Errors go to stderr. No Git checkout is required.
+
+`--changed-only` includes original changed/new/removed classifications, including
+approved snapshots. `--download ./build-42` requires a new directory with an existing
+parent. Files use generated snapshot-ID/kind names. Each PNG is authenticated,
+bounded and hashed; `manifest.json` is written only after all downloads finish.
+An absent manifest means incomplete output. Existing directories and symlinks are
+refused. Expired evidence cannot be downloaded, and a rerun invalidates stale
+comparison revisions. Tokens are never sent to redirected or arbitrary image URLs.
+
+Both read commands support `DIFORA_API_URL`/`--api-url`; HTTPS is required except
+for loopback development. Keep the read credential in your environment or secret
+manager, not a command-line argument. The default limits are 120 reads/minute and
+30 images/minute per token; the CLI respects bounded retry delays.
+
+[Read API, token setup and OpenAPI reference](https://difora.eu/docs/api.html).
 
 **Baseline environment:** approve baselines only from builds captured in CI, or in the
 exact same environment CI uses. Laptop font rendering can differ from Linux CI and make

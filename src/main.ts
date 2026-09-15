@@ -1,3 +1,11 @@
+import { runReadCommand } from './read-command';
+import {
+  extractMessage,
+  HttpError,
+  MAX_ATTEMPTS,
+  retryDelay,
+  sleep,
+} from './transport';
 import { annotate } from './annotate';
 import { environmentWarning } from './environment-warning';
 import { loadConfig } from './config';
@@ -83,8 +91,7 @@ interface BuildStatus {
   snapshotsRemoved: number;
 }
 
-const VERSION = '0.12.0';
-const MAX_ATTEMPTS = 5;
+const VERSION = '0.13.0';
 const FINAL_STATUSES = [
   'passed',
   'approved',
@@ -102,6 +109,8 @@ Usage:
                       [--base-branch <name>] [--base-commit <sha>] [--no-merge-base] [--config <file>] [--pr <number>]
   difora doctor       Show detected CI values and check the API connection
   difora annotate <dir> Write declared native/device metadata beside PNGs
+  difora builds       List builds using DIFORA_READ_TOKEN
+  difora inspect <number> Read snapshot results (--build-id explicitly uses an API ID)
   difora --version | --help
 
 Environment: DIFORA_TOKEN (project token), DIFORA_API_URL (default https://app.difora.eu/api),
@@ -252,28 +261,6 @@ function positiveInt(flag: string, value: string): number {
   return n;
 }
 
-class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
-function extractMessage(text: string): string {
-  try {
-    const parsed = JSON.parse(text) as { message?: string | string[] };
-    if (Array.isArray(parsed.message)) return parsed.message.join(', ');
-    if (typeof parsed.message === 'string') return parsed.message;
-  } catch {
-    // not JSON
-  }
-  return text.slice(0, 300);
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 /** Retries network errors, 429 and 5xx with exponential back-off (honouring Retry-After). */
 async function api<T>(
   opts: CliOptions,
@@ -315,11 +302,7 @@ async function api<T>(
     const text = await res.text().catch(() => '');
     const retryable = res.status === 429 || res.status >= 500;
     if (retryable && attempt < MAX_ATTEMPTS - 1) {
-      const retryAfter = Number(res.headers.get('retry-after') ?? '');
-      const delay =
-        Number.isFinite(retryAfter) && retryAfter > 0
-          ? Math.min(retryAfter, 60) * 1000
-          : 1000 * 2 ** attempt;
+      const delay = retryDelay(attempt, res.headers.get('retry-after'));
       log(
         `${method} ${path} → ${res.status}, retrying in ${Math.round(delay / 1000)}s`,
       );
@@ -607,6 +590,10 @@ async function doctor(opts: CliOptions): Promise<never> {
 }
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'builds' || process.argv[2] === 'inspect') {
+    await runReadCommand(process.argv[2], process.argv.slice(3), VERSION);
+    return;
+  }
   if (process.argv[2] === 'annotate') {
     annotate(process.argv.slice(3));
     return;
